@@ -1,0 +1,58 @@
+####DES II TAXON FUNCTION####
+
+# Note: des_tax is a function that should be applied exclusively on the scores 
+# of 3, 5, 7, 8, 12, 13, 22, 27 DES II items (Waller, Putnam & Carlson, 1996)
+# You'll obtain a vector ranging from 0 to 1 for each row (individual of 
+# your dataset), here called "des_tax_ind".
+# You can then decide if interpreting categorically the individual belonging
+# the taxon according to a given threshold (usually .9). 
+# In the example, "des_tax" is the function, "des_score" refers to a vector 
+# containing only the specific items (3, 5, 7, 8, 12, 13, 22, 27), 
+# "des_tax_ind" is the vector containing the taxon index for each row/individual, 
+# the overall dataset is called "data", and "des_tax_cat" is a categorical 
+# variable indicating if the individual is above the taxon chosen threshold or 
+# not. 
+
+
+des_tax <- function(des_score) {
+  threshold <- c(22, 52, 38, 47, 45, 25, 85, 42)
+  prob_tax <- c(0.227, 0.475, 0.477, 0.404, 0.485, 0.387, 0.353, 0.573)
+  prob_non_tax <- c(0.003, 0.003, 0.018, 0.004, 0.005, 0.010, 0.005, 0.010)
+  des_score_t <- des_score[c(3, 5, 7, 8, 12, 13, 22, 27)]
+  des_score_t = as.numeric(des_score_t)
+  p=0.033
+  
+  likelihoods_t <- numeric(length(des_score_t))
+  likelihoods_c <- numeric(length(des_score_t))
+  
+  for (i in 1:length(des_score_t)) {
+    if (des_score_t[i] >= threshold[i]) {
+      likelihoods_t[i] <- prob_tax[i]
+    } else {
+      likelihoods_t[i] <- 1 - prob_tax[i]
+    }
+    
+    if (des_score_t[i] >= threshold[i]) {
+      likelihoods_c[i] <- prob_non_tax[i]
+    } else {
+      likelihoods_c[i] <- 1 - prob_non_tax[i]
+    }
+  }
+  
+  lx_t <- prod(likelihoods_t)
+  lx_c <- prod(likelihoods_c)
+  
+  tax_ind <- (p * lx_t) / ((p * lx_t + (1 - p) * lx_c))
+  
+  return(tax_ind)
+}
+
+des_tax_ind= apply(des_score,1, des_tax)
+data$des_tax_ind=des_tax_ind
+
+for (i in 1:nrow(data)){ 
+  if (des_tax_ind[i]>.9)
+  {data$des_tax_cat[i]="yes"} else
+  {data$des_tax_cat[i]="no"} }
+
+
